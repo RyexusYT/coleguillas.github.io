@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OPENING DE CAJAS</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #ff6347, #1e90ff); /* Fondo vibrante */
+            color: white;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            height: 100vh; /* Asegura que cubra toda la altura de la pantalla */
+            background-size: cover; /* Fondo completo */
+            animation: backgroundAnimation 10s ease-in-out infinite; /* Animación de fondo */
+        }
+
+        @keyframes backgroundAnimation {
+            0% { background: linear-gradient(135deg, #ff6347, #1e90ff); }
+            50% { background: linear-gradient(135deg, #ff4500, #32cd32); }
+            100% { background: linear-gradient(135deg, #ff6347, #1e90ff); }
+        }
+
+        .container {
+            margin-top: 50px;
+            animation: fadeIn 2s ease-in;
+        }
+
+        @keyframes fadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        .case {
+            width: 250px;
+            height: 150px;
+            background: linear-gradient(145deg, #f0c14b, #c39225);
+            border-radius: 15px;
+            margin: 20px auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.7);
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .case:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.8);
+        }
+
+        .roulette {
+            display: flex;
+            overflow: hidden;
+            width: 700px;
+            height: 150px;
+            margin: 30px auto;
+            border: 3px solid #ffffff55;
+            border-radius: 10px;
+            background: #161b22;
+            position: relative;
+        }
+
+        .roulette-items {
+            display: flex;
+            transition: transform 8s cubic-bezier(0.25, 1, 0.5, 1); /* Animación lenta al final */
+        }
+
+        .roulette .item {
+            flex: 0 0 150px;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 5px;
+            border-radius: 5px;
+            position: relative;
+            transition: transform 0.5s ease;
+        }
+
+        .roulette .item:hover {
+            transform: scale(1.05);
+        }
+
+        .roulette .item img {
+            width: 100%;
+            height: auto;
+            border-radius: 5px;
+        }
+
+        .marker {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 5px;
+            height: 100%;
+            background-color: red;
+            z-index: 2;
+        }
+
+        .button {
+            margin: 20px;
+            padding: 15px 30px;
+            background: linear-gradient(145deg, #007bff, #0056b3);
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.2s;
+        }
+
+        .button:hover {
+            background: linear-gradient(145deg, #0056b3, #00409d);
+            transform: scale(1.05);
+        }
+
+        .result {
+            margin-top: 20px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #f0c14b;
+            display: none;
+        }
+
+        .result img {
+            width: 200px;
+            height: auto;
+            border: 3px solid #f0c14b;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        /* Estilo para mostrar el total acumulado */
+        .total {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #f0c14b;
+        }
+    </style>
+</head>
+<body>
+<div class="total" id="total">€0</div> <!-- Total acumulado -->
+<div class="container">
+    <h1>OPENING DE CAJAS</h1>
+    <div class="case" onclick="openCase()">
+        <h2>CAJA NORMAL</h2>
+    </div>
+    <div class="roulette">
+        <div class="marker"></div>
+        <div class="roulette-items" id="roulette"></div>
+    </div>
+    <button class="button" onclick="rollRoulette()">ABRIR</button>
+    <div class="result" id="result">
+        <p>Has obtenido:</p>
+        <img id="resultImage" src="" alt="">
+        <p id="resultName"></p>
+        <p id="resultValue"></p> <!-- Mostrar valor de cada objeto -->
+    </div>
+</div>
+
+<!-- Sonido para la ruleta -->
+<audio id="spinSound" src="C:\\Users\\lango\\OneDrive\\Documents\\Armas\\rule.mp3"></audio> <!-- Asegúrate de colocar el path correcto -->
+
+<script>
+    const items = [
+        { name: 'Revolver', rarity: 'common', image: 'revolver.png', probability: 40, value: 1.5 },
+        { name: 'P90', rarity: 'common', image: 'p90.png', probability: 30, value: 3.0 },
+        { name: 'SSG', rarity: 'rare', image: 'ssg.png', probability: 20, value: 12.0 },
+        { name: 'AK-47', rarity: 'epic', image: 'ak47.png', probability: 9, value: 124.0 },
+        { name: 'Kukri', rarity: 'legendary', image: 'kukri.png', probability: 1, value: 1413.0 }
+    ];
+
+    let totalValue = 0; // Total acumulado en euros
+
+    const roulette = document.getElementById('roulette');
+    const result = document.getElementById('result');
+    const resultImage = document.getElementById('resultImage');
+    const resultName = document.getElementById('resultName');
+    const resultValue = document.getElementById('resultValue');
+    const rouletteItems = document.querySelector('.roulette-items');
+    const spinSound = document.getElementById('spinSound');
+    const totalDisplay = document.getElementById('total');
+
+    function populateRoulette() {
+        rouletteItems.innerHTML = ''; // Limpiar los ítems anteriores
+        for (let i = 0; i < 30; i++) { // Repetir los ítems para hacer más largo el carrusel
+            items.forEach(item => {
+                const div = document.createElement('div');
+                div.classList.add('item');
+                const img = document.createElement('img');
+                img.src = item.image;
+                img.alt = item.name;
+                div.appendChild(img);
+                rouletteItems.appendChild(div);
+            });
+        }
+    }
+
+    function getWeightedItem() {
+        let totalWeight = 0;
+        items.forEach(item => {
+            totalWeight += item.probability;
+        });
+
+        const randomNum = Math.random() * totalWeight;
+        let accumulatedWeight = 0;
+
+        for (let i = 0; i < items.length; i++) {
+            accumulatedWeight += items[i].probability;
+            if (randomNum < accumulatedWeight) {
+                return items[i];
+            }
+        }
+    }
+
+    function rollRoulette() {
+        result.style.display = 'none';
+        spinSound.play(); // Reproducir el sonido al girar la ruleta
+
+        const selectedItem = getWeightedItem();
+
+        const totalItems = items.length * 30;
+        const visibleItems = 5;
+        const selectedItemIndex = items.findIndex(item => item === selectedItem);
+        const selectedPosition = selectedItemIndex + 30;
+        const offset = (150 * selectedPosition) - (150 * visibleItems);
+
+        rouletteItems.style.transition = 'none';
+        rouletteItems.style.transform = `translateX(0px)`; // Reiniciar la posición
+
+        setTimeout(() => {
+            rouletteItems.style.transition = 'transform 8s cubic-bezier(0.25, 1, 0.5, 1)';
+            rouletteItems.style.transform = `translateX(-${offset}px)`;
+        }, 50);
+
+        setTimeout(() => {
+            result.style.display = 'block';
+            resultImage.src = selectedItem.image;
+            resultName.textContent = selectedItem.name;
+            resultValue.textContent = `Valor: €${selectedItem.value}`;
+
+            totalValue += selectedItem.value; // Sumar al total
+            totalDisplay.textContent = `€${totalValue.toFixed(2)}`; // Actualizar total
+        }, 8000);
+    }
+
+    function openCase() {
+        populateRoulette();
+    }
+
+    populateRoulette();
+</script>
+</body>
+</html>
